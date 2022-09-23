@@ -1,0 +1,32 @@
+{
+  "name": "todo-assignment",
+  "version": "1.0.0",
+  "description": "In this application, Users can create todos",
+  "main": "index.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "server": "nodemon backend/server.js",
+    "client": "npm start --prefix frontend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lnirjar/todo-assignment.git"
+  },
+  "author": "Nirjar Lohakare",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lnirjar/todo-assignment/issues"
+  },
+  "homepage": "https://github.com/lnirjar/todo-assignment#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "express-async-handler": "^1.2.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^6.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
