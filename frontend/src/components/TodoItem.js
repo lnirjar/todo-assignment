@@ -3,7 +3,9 @@ import { useState } from "react"
 import EditIcon from '@mui/icons-material/Edit';
 import TodoFormDialog from "./TodoFormDialog";
 
-function TodoItem({ text, dueDate }) {
+function TodoItem(props) {
+    const { text, dueDate } = props;
+    console.log(props);
     const [checked, setChecked] = useState(false);
 
     const handleChange = (event) => {
@@ -59,7 +61,7 @@ function TodoItem({ text, dueDate }) {
                     label={text}
                 />
                 <Chip label={formatDueDate(dueDate)} />
-                <TodoFormDialog actionType='edit' />
+                <TodoFormDialog actionType='edit' taskText={text} dueDate={dueDate} _id={props._id} />
             </Stack>
         </Paper>
     )

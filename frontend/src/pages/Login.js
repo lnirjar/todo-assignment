@@ -1,5 +1,5 @@
 import { Button, Container, Stack, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
@@ -13,16 +13,67 @@ import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-function Login() {
+const API_URL = '/api/users/login';
+
+function Login({ auth, setAuth }) {
     const [values, setValues] = useState({
         email: '',
         password: '',
         showPassword: false,
+        helperText: ''
     });
 
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (auth.user) {
+            navigate('/dashboard')
+        }
+    }, [auth.user])
+
+    const loginUser = async (userData) => {
+        setAuth({
+            user: null,
+            isError: false,
+            isSuccess: false,
+            isLoading: true,
+            message: ''
+        });
+
+        try {
+            const response = await axios.post(API_URL, userData);
+
+            if (response.data) {
+                localStorage.setItem('user', JSON.stringify(response.data));
+            }
+
+            setAuth({
+                user: response.data,
+                isError: false,
+                isSuccess: true,
+                isLoading: false,
+                message: ''
+            })
+        } catch (error) {
+            setAuth({
+                user: null,
+                isError: true,
+                isSuccess: false,
+                isLoading: false,
+                message: error.message
+            })
+            setValues((prevState) => ({
+                ...prevState,
+                helperText: error.message
+            }))
+        }
+    }
+
     const handleChange = (prop) => (event) => {
-        setValues({ ...values, [prop]: event.target.value });
+        setValues({ ...values, [prop]: event.target.value, helperText: '' });
     };
 
     const handleClickShowPassword = (prop) => () => {
@@ -38,6 +89,8 @@ function Login() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const { email, password } = values;
+        loginUser({ email, password });
     }
 
     return (
@@ -91,6 +144,7 @@ function Login() {
                         }
                         label="Password"
                     />
+                    <FormHelperText>{values.helperText}</FormHelperText>
                 </FormControl>
                 <Button
                     fullWidth

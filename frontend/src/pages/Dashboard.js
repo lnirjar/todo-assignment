@@ -2,8 +2,42 @@ import { Fab, Stack } from "@mui/material"
 import TodoItem from "../components/TodoItem"
 import AddIcon from '@mui/icons-material/Add';
 import TodoFormDialog from "../components/TodoFormDialog";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-function Dashboard() {
+function Dashboard({ auth, setAuth }) {
+    const [tasks, setTasks] = useState([]);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!auth.user) {
+            navigate('/');
+        }
+    }, [auth.user])
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (auth.user) {
+                const API_URL = '/api/tasks';
+                const token = auth && auth.user && auth.user.token;
+                const config = {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+                const response = await axios.get(API_URL, config);
+
+                setTasks(response.data);
+            } else {
+                setTasks([]);
+            }
+        }
+
+        fetchData();
+
+    }, [])
+
     return (
         <>
             <Stack
@@ -20,18 +54,12 @@ function Dashboard() {
                     maxWidth='600px'
                     width='100%'
                 >
-                    <TodoItem text='Learn JS' dueDate='24 sep 2022 10:00' />
-                    <TodoItem text='Learn CSS' dueDate='8 oct 2022 13:10' />
-                    <TodoItem text='Learn HTML' dueDate='24 nov 2022 18:30' />
-                    <TodoItem text='Learn HTML' dueDate='24 nov 2021 18:30' />
-                    <TodoItem text='Learn HTML' dueDate='24 nov 2023 18:30' />
-                    <TodoItem text='Learn JS' dueDate='24 sep 2022 10:00' />
-                    <TodoItem text='Learn CSS' dueDate='8 oct 2022 13:10' />
-                    <TodoItem text='Learn HTML' dueDate='24 nov 2022 18:30' />
-                    <TodoItem text='Learn HTML' dueDate='24 nov 2021 18:30' />
-                    <TodoItem text='Learn HTML' dueDate='24 nov 2023 18:30' />
+                    {
+                        tasks.map(task => (<TodoItem {...task} auth={auth} key={task._id} />))
+                    }
+
                 </Stack>
-                <TodoFormDialog actionType='create' />
+                <TodoFormDialog actionType='create' auth={auth} tasks={tasks} setTasks={setTasks} />
             </Stack>
         </>
     )

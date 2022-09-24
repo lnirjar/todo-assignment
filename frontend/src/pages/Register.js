@@ -1,5 +1,6 @@
 import { Button, Container, Stack, Typography } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
@@ -13,16 +14,62 @@ import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { useNavigate } from 'react-router-dom';
 
-function Register() {
+const API_URL = '/api/users/';
+
+function Register({ auth, setAuth }) {
     const [values, setValues] = useState({
         name: '',
         email: '',
         password: '',
         password2: '',
         showPassword: false,
-        showPassword2: false
+        showPassword2: false,
+        helperText: ''
     });
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (auth.user) {
+            navigate('/dashboard')
+        }
+    }, [auth.user])
+
+    const registerUser = async (userData) => {
+        setAuth({
+            user: null,
+            isError: false,
+            isSuccess: false,
+            isLoading: true,
+            message: ''
+        });
+
+        try {
+            const response = await axios.post(API_URL, userData);
+
+            if (response.data) {
+                localStorage.setItem('user', JSON.stringify(response.data));
+            }
+
+            setAuth({
+                user: response.data,
+                isError: false,
+                isSuccess: true,
+                isLoading: false,
+                message: ''
+            })
+        } catch (error) {
+            setAuth({
+                user: null,
+                isError: true,
+                isSuccess: false,
+                isLoading: false,
+                message: error.message
+            })
+        }
+    }
 
     const handleChange = (prop) => (event) => {
         setValues({ ...values, [prop]: event.target.value });
@@ -41,6 +88,28 @@ function Register() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        setValues((prevState) => ({
+            ...prevState,
+            helperText: ''
+        }))
+        if (values.password !== values.password2) {
+            setValues((prevState) => ({
+                ...prevState,
+                helperText: 'password not matching'
+            }))
+        } else {
+            const { name, email, password } = values;
+            registerUser({ name, email, password });
+            setValues({
+                name: '',
+                email: '',
+                password: '',
+                password2: '',
+                showPassword: false,
+                showPassword2: false,
+                helperText: ''
+            })
+        }
     }
 
     return (
@@ -61,12 +130,11 @@ function Register() {
                     width: '100%',
                     margin: '20px'
                 }}
-                onSubmit={handleSubmit}
+                onSubmit={(e) => { e.preventDefault() }}
             >
                 <TextField
                     id="name"
                     label="Name"
-                    defaultValue="John Doe"
                     fullWidth
                     value={values.name}
                     onChange={handleChange('name')}
@@ -74,7 +142,6 @@ function Register() {
                 <TextField
                     id="email"
                     label="Email"
-                    defaultValue="john@example.com"
                     fullWidth
                     type='email'
                     value={values.email}
@@ -123,12 +190,15 @@ function Register() {
                         }
                         label="Confirm Password"
                     />
+                    <FormHelperText id="password2-helper-text">{values.helperText}</FormHelperText>
                 </FormControl>
                 <Button
                     fullWidth
                     type='submit'
                     size='large'
-                    variant='contained'>
+                    variant='contained'
+                    onClick={handleSubmit}
+                >
                     Submit
                 </Button>
             </Stack>

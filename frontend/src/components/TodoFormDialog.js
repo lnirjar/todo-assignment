@@ -12,19 +12,28 @@ import { Fab, Stack } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { DateTimePicker, MobileDateTimePicker } from '@mui/x-date-pickers';
+import axios from 'axios';
 
-function TodoFormDialog({ actionType }) {
+const API_URL = '/api/tasks';
+
+function TodoFormDialog(props) {
+    const { actionType, auth, taskText, dueDate } = props;
+    console.log(props);
     const [open, setOpen] = useState(false);
 
-    const [text, setText] = useState('');
-    const [date, setDate] = useState(null);
+    const [text, setText] = useState(taskText || '');
+    const [date, setDate] = useState(new Date(dueDate) || new Date(Date.now()));
 
     const handleClickOpen = () => {
         setOpen(true);
+        setText(taskText || '');
+        setDate(new Date(dueDate) || new Date(Date.now()));
     };
 
     const handleClose = () => {
         setOpen(false);
+        setText('');
+        setDate(new Date(Date.now()));
     };
 
     const handleDateChange = (newDate) => {
@@ -34,6 +43,33 @@ function TodoFormDialog({ actionType }) {
     const handleTextChange = (e) => {
         setText(e.target.value);
     };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        const token = auth && auth.user && auth.user.token;
+        const config = {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }
+
+        if (actionType === 'create') {
+            const response = await axios.post(API_URL, { text, dueDate: date }, config);
+            props.setTasks(prevTasks => ([...prevTasks, response.data]))
+        } else {
+            const response = await axios.put(`${API_URL}/${props._id}`, { text, dueDate: date }, config);
+            props.setTasks(prevTasks => (
+                prevTasks.map(task => {
+                    if (task._id == response.data._id) {
+                        return response.data;
+                    }
+                    return task;
+                })
+            ))
+        }
+
+        handleClose();
+    }
 
     return (
         <div style={{
@@ -92,7 +128,7 @@ function TodoFormDialog({ actionType }) {
                     paddingBottom: '30px',
                 }}>
                     <Button onClick={handleClose}>Cancel</Button>
-                    <Button onClick={handleClose} variant='contained'>Save</Button>
+                    <Button onClick={handleSave} variant='contained'>Save</Button>
                 </DialogActions>
             </Dialog>
         </div>
